@@ -10,7 +10,6 @@
 #define INFINITY 99999
 
 #include <stdio.h>
-int i,j;
 
 /*Game table, in each position it holds the number of the player
  that has picked that position (1 or 2) ou 0 if it has not been taken.
@@ -33,25 +32,10 @@ int max_player = 1;
 // Each player's score
 int score1 = 0;
 int score2 = 0;
-
 // current column picked by current player
 int current_move;
 // current row picked by current player
 int current_row;
-
-/*
- Structures for maintaining the state of the recursion.
- */
-typedef struct state
-{
-    int table[N_ROWS * N_COLUMNS]; //board state
-    int current_move;
-    int parent_index;
-    int node_value;
-    int child_count; // -1 means children havent been generated yet, non negative numbers mean how many children are left to be checked for minmax values
-    int depth;
-    
-} state;
 
 
 /*
@@ -62,9 +46,9 @@ void print_table(int t[N_ROWS * N_COLUMNS]) {
      printf("~* CONNECT 4 *~ \n \n");
     
     // Print table
-    for (i = 0; i < N_ROWS; i++) {
+    for (int i = 0; i < N_ROWS; i++) {
         printf("|");
-        for (j = 0; j < N_COLUMNS; j++) {
+        for (int j = 0; j < N_COLUMNS; j++) {
             if (t[i*N_COLUMNS + j] == 0)
                 printf(" . ");
             if (t[i*N_COLUMNS + j] == 1)
@@ -78,23 +62,12 @@ void print_table(int t[N_ROWS * N_COLUMNS]) {
     
     // Print numbers
      printf("\n+ ");
-     for (j=0; j < N_COLUMNS; j++)
+     for (int j=0; j < N_COLUMNS; j++)
        printf("%d   ",j);
      printf("+ \n \n");
     
 //     Score
      printf("SCORE: \n Player 1 (X) = %d \n Player 2 (0) = %d \n \n", score1, score2);
-}
-
-
-void print_state(state s){
-    // printf("%s\n", );
-    print_table(s.table);
-    printf("current move %d\n", s.current_move);
-    printf("parent index %d\n", s.parent_index);
-    printf("node value %d\n", s.node_value);
-    printf("child count %d\n", s.child_count);
-    printf("depth %d\n", s.depth);
 }
 
 /*
@@ -112,7 +85,7 @@ int current_player_won(int table[N_ROWS * N_COLUMNS], int current_row, int curre
     
     // Check for horizontal sequence
     int sequence_length = 1;
-    j = 1;
+    int j = 1;
     while ((current_move - j >= 0) && (table[current_row * N_COLUMNS + current_move - j] == current_player)){
         j++; sequence_length++;
     }
@@ -157,7 +130,7 @@ int column_is_full (int table[N_ROWS * N_COLUMNS], int column_j) {
 }
 
 int table_is_full(int table[N_ROWS * N_COLUMNS]) {
-    for (j = 0; j < N_COLUMNS; j++){
+    for (int j = 0; j < N_COLUMNS; j++){
         //If some column is not full, then table is not full
         if (table[j] == 0)
             return false;
@@ -170,6 +143,44 @@ void copy_table(int new_table[N_ROWS * N_COLUMNS], int source_table[N_ROWS * N_C
     for (int i = 0; i < N_ROWS; i++)
         for (int j = 0; j < N_COLUMNS; j++)
             new_table[i*N_COLUMNS + j] = source_table[i*N_COLUMNS+j];
+}
+
+/*
+ Structures for maintaining the state of the recursion.
+ */
+typedef struct state
+{
+    int table[N_ROWS * N_COLUMNS]; //board state
+    int current_move;
+    int parent_index;
+    int node_value;
+    int child_count; // -1 means children havent been generated yet, non negative numbers mean how many children are left to be checked for minmax values
+    int depth;
+    
+} state;
+
+
+state new_state(int t[N_ROWS * N_COLUMNS], int current_move, int parent_index, int node_value, int child_count, int depth){
+    state s;
+    copy_table(s.table, t);
+    s.current_move = current_move;
+    s.parent_index = parent_index;
+    s.node_value = node_value;
+    s.child_count = child_count;
+    s.depth = depth;
+    // print_state(s);
+    
+    return s;
+}
+
+void print_state(state s){
+    // printf("%s\n", );
+    print_table(s.table);
+    printf("current move %d\n", s.current_move);
+    printf("parent index %d\n", s.parent_index);
+    printf("node value %d\n", s.node_value);
+    printf("child count %d\n", s.child_count);
+    printf("depth %d\n", s.depth);
 }
 
 typedef struct stack
@@ -204,27 +215,6 @@ stack new_stack(){
     s.last_i = -1;
     return s;
 }
-
-
-
-
-
-
-state new_state(int t[N_ROWS * N_COLUMNS], int current_move, int parent_index, int node_value, int child_count, int depth){
-    state s;
-    copy_table(s.table, t);
-    s.current_move = current_move;
-    s.parent_index = parent_index;
-    s.node_value = node_value;
-    s.child_count = child_count;
-    s.depth = depth;
-    // print_state(s);
-    
-    return s;
-}
-
-
-
 
 int minmax(int current_table[N_ROWS * N_COLUMNS], int origin_is_max){
     
@@ -345,7 +335,7 @@ int minmax(int current_table[N_ROWS * N_COLUMNS], int origin_is_max){
         int child_value = -INFINITY;
         if (is_max) child_value = INFINITY;
         
-        for(j = 0; j < N_COLUMNS; j++ ){
+        for(int j = 0; j < N_COLUMNS; j++ ){
             if (column_is_full(current_state.table, j)) continue;
             child_count++;
             
@@ -378,13 +368,15 @@ int minmax(int current_table[N_ROWS * N_COLUMNS], int origin_is_max){
 
 
 
+
+
+
+
 void clear_table(){
-    for (i = 0; i < N_ROWS; i++)
-        for (j = 0; j < N_COLUMNS; j++)
+    for (int i = 0; i < N_ROWS; i++)
+        for (int j = 0; j < N_COLUMNS; j++)
             table[i*N_COLUMNS + j] = 0;
 }
-
-
 
 
 /*
@@ -429,8 +421,6 @@ void switch_player(){
     else
         current_player = 1;     
 }
-
-
 
 /* 
  Increase current player's score
