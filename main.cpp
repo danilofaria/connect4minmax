@@ -290,8 +290,10 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
             }
             
             int value = 0;
-            if (lose) value = -1;
-            if (!is_max) value = -value;
+            if (lose)
+                value = -1;
+            if (!is_max)
+                value = -value;
             if (all_children_accounted_for)
                 value = current_state.node_value;
             
@@ -306,7 +308,8 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
                 if (parent_value > value){
                     
                     s.data[parent_index].node_value = value;
-                    best_move = current_move;
+                    if(current_depth == 1)
+                        best_move = current_move;
                     
                     if (parents_parent_index != -1){
                         int alpha = s.data[parents_parent_index].node_value;
@@ -324,7 +327,8 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
                 if (parent_value < value){
                 
                     s.data[parent_index].node_value = value;
-                    best_move = current_move;
+                    if(current_depth == 1)
+                        best_move = current_move;
                 
                     if (parents_parent_index != -1){
                         int beta = s.data[parents_parent_index].node_value;
