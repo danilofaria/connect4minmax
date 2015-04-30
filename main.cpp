@@ -25,7 +25,7 @@ int i,j;
  4 |0|1|1|1|0|0|0|
  5 |1|2|2|2|2|0|0|
  */
-int table[N_ROWS][N_COLUMNS];
+int table[N_ROWS * N_COLUMNS];
 
 // Either 1 or 2
 int current_player = 1;
@@ -44,7 +44,7 @@ int current_row;
  */
 typedef struct state
 {
-    int table[N_ROWS][N_COLUMNS]; //board state
+    int table[N_ROWS * N_COLUMNS]; //board state
     int current_move;
     int parent_index;
     int node_value;
@@ -57,7 +57,7 @@ typedef struct state
 /*
  Prints table and score
  */
-void print_table(int t[N_ROWS][N_COLUMNS]) {
+void print_table(int t[N_ROWS * N_COLUMNS]) {
     
      printf("~* CONNECT 4 *~ \n \n");
     
@@ -65,11 +65,11 @@ void print_table(int t[N_ROWS][N_COLUMNS]) {
     for (i = 0; i < N_ROWS; i++) {
         printf("|");
         for (j = 0; j < N_COLUMNS; j++) {
-            if (t[i][j] == 0)
+            if (t[i*N_COLUMNS + j] == 0)
                 printf(" . ");
-            if (t[i][j] == 1)
+            if (t[i*N_COLUMNS + j] == 1)
                 printf(" X ");
-            if (t[i][j] == 2)
+            if (t[i*N_COLUMNS + j] == 2)
                 printf(" 0 ");
             printf("|");
         }
@@ -101,23 +101,23 @@ void print_state(state s){
  Checks if player won by making a sequence of 4 markers either
  horizontally, vertically or diagonally.
  */
-int current_player_won(int table[N_ROWS][N_COLUMNS], int current_row, int current_move, int current_player){
+int current_player_won(int table[N_ROWS * N_COLUMNS], int current_row, int current_move, int current_player){
     // Check for vertical sequence
     // Look at last marker placed and compare with the 3 markers below it
     if ((current_row < N_ROWS-3)
-        && (table[current_row][current_move] == table[current_row + 1][current_move])
-        && (table[current_row + 1][current_move] == table[current_row + 2][current_move])
-        && (table[current_row+ 2][current_move] == table[current_row + 3][current_move]))
+        && (table[current_row * N_COLUMNS + current_move] == table[(current_row + 1) * N_COLUMNS + current_move])
+        && (table[(current_row + 1) * N_COLUMNS + current_move] == table[(current_row + 2) * N_COLUMNS + current_move])
+        && (table[(current_row+ 2) * N_COLUMNS + current_move] == table[(current_row + 3) * N_COLUMNS + current_move]))
         return true;
     
     // Check for horizontal sequence
     int sequence_length = 1;
     j = 1;
-    while ((current_move - j >= 0) && (table[current_row][current_move - j] == current_player)){
+    while ((current_move - j >= 0) && (table[current_row * N_COLUMNS + current_move - j] == current_player)){
         j++; sequence_length++;
     }
     j = 1;
-    while ((current_move + j < N_COLUMNS) && (table[current_row][current_move + j] == current_player)){
+    while ((current_move + j < N_COLUMNS) && (table[current_row * N_COLUMNS + current_move + j] == current_player)){
         j++; sequence_length++;
     }
     if (sequence_length >= 4)
@@ -126,11 +126,11 @@ int current_player_won(int table[N_ROWS][N_COLUMNS], int current_row, int curren
     //Check for diagonal sequence
     sequence_length = 1;
     j = 1;
-    while((current_move - j >= 0) && (current_row - j >= 0) && (table[current_row - j][current_move - j] == current_player)){
+    while((current_move - j >= 0) && (current_row - j >= 0) && (table[(current_row - j) * N_COLUMNS + current_move - j] == current_player)){
         j++; sequence_length++;
     }
     j = 1;
-    while ((current_move + j < N_COLUMNS) && (current_row + j < N_ROWS) && (table[current_row + j][current_move + j] == current_player)){
+    while ((current_move + j < N_COLUMNS) && (current_row + j < N_ROWS) && (table[(current_row + j) * N_COLUMNS + current_move + j] == current_player)){
         j++; sequence_length++;
     }
     if (sequence_length >= 4)
@@ -139,11 +139,11 @@ int current_player_won(int table[N_ROWS][N_COLUMNS], int current_row, int curren
     //Check for inverted diagonal sequence
     sequence_length = 1;
     j = 1;
-    while((current_move - j >= 0) && (current_row + j < N_ROWS) && (table[current_row + j][current_move - j] == current_player)){
+    while((current_move - j >= 0) && (current_row + j < N_ROWS) && (table[(current_row + j) * N_COLUMNS + current_move - j] == current_player)){
         j++; sequence_length++;
     }
     j = 1;
-    while ((current_move + j < N_COLUMNS) && (current_row - j >= 0) && (table[current_row - j][current_move + j] == current_player)){
+    while ((current_move + j < N_COLUMNS) && (current_row - j >= 0) && (table[(current_row - j) * N_COLUMNS + current_move + j] == current_player)){
         j++; sequence_length++;
     }
     if (sequence_length >= 4)
@@ -152,24 +152,24 @@ int current_player_won(int table[N_ROWS][N_COLUMNS], int current_row, int curren
     return false;
 }
 
-int column_is_full (int table[N_ROWS][N_COLUMNS], int column_j) {
-    return (table[0][column_j] != 0);
+int column_is_full (int table[N_ROWS * N_COLUMNS], int column_j) {
+    return (table[column_j] != 0);
 }
 
-int table_is_full(int table[N_ROWS][N_COLUMNS]) {
+int table_is_full(int table[N_ROWS * N_COLUMNS]) {
     for (j = 0; j < N_COLUMNS; j++){
         //If some column is not full, then table is not full
-        if (table[0][j] == 0)
+        if (table[j] == 0)
             return false;
     }
     return true;
 }
 
-void copy_table(int new_table[N_ROWS][N_COLUMNS], int source_table[N_ROWS][N_COLUMNS])
+void copy_table(int new_table[N_ROWS * N_COLUMNS], int source_table[N_ROWS * N_COLUMNS])
 {
     for (int i = 0; i < N_ROWS; i++)
         for (int j = 0; j < N_COLUMNS; j++)
-            new_table[i][j] = source_table[i][j];
+            new_table[i*N_COLUMNS + j] = source_table[i*N_COLUMNS+j];
 }
 
 typedef struct stack
@@ -180,17 +180,7 @@ typedef struct stack
 
 void stack_push(stack &s, state some_state){
     s.last_i = s.last_i + 1;
-    // printf("last i: %d\n",s.last_i);
     s.data[s.last_i] = some_state;
-    // s.data[s.last_i].current_move = some_state.current_move;
-    // s.data[s.last_i].parent_index = some_state.parent_index;
-    // s.data[s.last_i].node_value = some_state.node_value;
-    // s.data[s.last_i].child_count = some_state.child_count;
-    // s.data[s.last_i].depth = some_state.depth;
-    
-    // print_state(some_state);
-    // print_state(s.data[s.last_i]);
-    
 }
 
 int stack_is_empty(stack &s){
@@ -220,7 +210,7 @@ stack new_stack(){
 
 
 
-state new_state(int t[N_ROWS][N_COLUMNS], int current_move, int parent_index, int node_value, int child_count, int depth){
+state new_state(int t[N_ROWS * N_COLUMNS], int current_move, int parent_index, int node_value, int child_count, int depth){
     state s;
     copy_table(s.table, t);
     s.current_move = current_move;
@@ -236,7 +226,7 @@ state new_state(int t[N_ROWS][N_COLUMNS], int current_move, int parent_index, in
 
 
 
-int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
+int minmax(int current_table[N_ROWS * N_COLUMNS], int origin_is_max){
     
     int value = INFINITY;
     if (origin_is_max) value = -INFINITY;
@@ -269,7 +259,7 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
         if (current_move != -1){
             // retrieve row index of current state's move
             int row = 0;
-            while (current_state.table[row][current_move] == 0)
+            while (current_state.table[row * N_COLUMNS + current_move] == 0)
                 row++;
             
             //check if player wins in this move
@@ -359,18 +349,18 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
             if (column_is_full(current_state.table, j)) continue;
             child_count++;
             
-            int child_table[N_ROWS][N_COLUMNS];
+            int child_table[N_ROWS * N_COLUMNS];
             copy_table(child_table, current_state.table);
             
             // Find row where we can play next
             int row = N_ROWS-1;
-            while (child_table[row][j] != 0)
+            while (child_table[row * N_COLUMNS + j] != 0)
                 row--;
             
             if (is_max)
-                child_table[row][j] = 1;
+                child_table[row * N_COLUMNS + j] = 1;
             else
-                child_table[row][j] = 2;
+                child_table[row * N_COLUMNS + j] = 2;
             
             state child;
             child = new_state(child_table, j, current_index, child_value, -1, current_depth+1);
@@ -391,7 +381,7 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
 void clear_table(){
     for (i = 0; i < N_ROWS; i++)
         for (j = 0; j < N_COLUMNS; j++)
-            table[i][j] = 0;
+            table[i*N_COLUMNS + j] = 0;
 }
 
 
@@ -419,11 +409,11 @@ void pick_column() {
     // Find row where his move will be performed
     // It will be the first row with value equals 0
     int row = N_ROWS-1;
-    while (table[row][current_move] != 0)
+    while (table[row * N_COLUMNS + current_move] != 0)
         row--;
     
     // Change table accordingly
-    table[row][current_move] = current_player;
+    table[row * N_COLUMNS + current_move] = current_player;
     
     // Store row where player just placed his marker
     // Used to check if current player won the game
