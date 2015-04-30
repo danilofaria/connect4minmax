@@ -130,7 +130,7 @@ int current_player_won(int table[N_ROWS][N_COLUMNS], int current_row, int curren
         j++; sequence_length++;
     }
     j = 1;
-    while ((current_move + j < N_COLUMNS) && (current_row + j <= 5) && (table[current_row + j][current_move + j] == current_player)){
+    while ((current_move + j < N_COLUMNS) && (current_row + j < N_ROWS) && (table[current_row + j][current_move + j] == current_player)){
         j++; sequence_length++;
     }
     if (sequence_length >= 4)
