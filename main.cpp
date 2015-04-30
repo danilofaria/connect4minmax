@@ -29,6 +29,7 @@ int table[N_ROWS][N_COLUMNS];
 
 // Either 1 or 2
 int current_player = 1;
+int max_player = 1;
 // Each player's score
 int score1 = 0;
 int score2 = 0;
@@ -412,7 +413,7 @@ void pick_column() {
             scanf ("%d",&current_move);
         }
     }else{
-        current_move = minmax(table,0);
+        current_move = minmax(table,max_player==2);
     }
     
     // Find row where his move will be performed
@@ -458,7 +459,9 @@ int main(){
     // game loop
     while (true) { 
         clear_table();
-        print_table(table); 
+        print_table(table);
+        // The player who starts is the max player
+        max_player = current_player;
         
         // match loop
         while (true) {
