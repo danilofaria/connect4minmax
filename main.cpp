@@ -4,8 +4,8 @@
 #define false 0
 #define true 1
 
-#define N_ROWS 5
-#define N_COLUMNS 3
+#define N_ROWS 4
+#define N_COLUMNS 4
 
 #define INFINITY 99999
 
@@ -255,15 +255,15 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
         int current_depth = current_state.depth;
         int is_max = (current_depth % 2 == 0);
         if (!origin_is_max) is_max = !(is_max);
-        int current_player = 1;
-        if (!is_max) current_player = 2;
+        int last_player = 1;
+        if (is_max) last_player = 2;
         int current_move = current_state.current_move;
         int parent_index = current_state.parent_index;
         
         //  printf("current state:\n");
         //  print_state(current_state);
         
-        int win = 0, full_table = 0, all_children_accounted_for = 0;
+        int lose = 0, full_table = 0, all_children_accounted_for = 0;
         // If not the origin node, then test for win and full table situations
         if (current_move != -1){
             // retrieve row index of current state's move
@@ -272,7 +272,7 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
                 row++;
             
             //check if player wins in this move
-            win = current_player_won(current_state.table, row, current_move, current_player);
+            lose = current_player_won(current_state.table, row, current_move, last_player);
             
             //check if table gets full
             full_table = table_is_full(current_state.table);
@@ -281,7 +281,7 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
         all_children_accounted_for = current_state.child_count == 0;
             
         //if node is terminal (leaf) or all children have been computed
-        if (win || full_table || all_children_accounted_for || current_depth == 11){//
+        if (lose || full_table || all_children_accounted_for ){//
             
             // If origin node, then end search
             if (current_move == -1){
@@ -290,7 +290,7 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
             }
             
             int value = 0;
-            if (win) value = 1;
+            if (lose) value = -1;
             if (!is_max) value = -value;
             if (all_children_accounted_for)
                 value = current_state.node_value;
@@ -298,18 +298,44 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
             state parent_state = s.data[parent_index];
             int parent_value = parent_state.node_value;
             
+            int parents_parent_index = s.data[parent_index].parent_index;
+            
             //If current state is max, the parent state is min
             if(is_max){
                 // if parent state has bigger value, give it the smaller value
                 if (parent_value > value){
+                    
                     s.data[parent_index].node_value = value;
                     best_move = current_move;
+                    
+                    if (parents_parent_index != -1){
+                        int alpha = s.data[parents_parent_index].node_value;
+                        int beta = value;
+                        if (alpha >= beta){
+                            s.last_i = parent_index;
+                            s.data[parent_index].child_count = 0;
+                            continue;
+                        }
+                    }
+                    
                 }
             }//otherwise, parent state is max
             else{
                 if (parent_value < value){
+                
                     s.data[parent_index].node_value = value;
                     best_move = current_move;
+                
+                    if (parents_parent_index != -1){
+                        int beta = s.data[parents_parent_index].node_value;
+                        int alpha = value;
+                        if (alpha >= beta){
+                            s.last_i = parent_index;
+                            s.data[parent_index].child_count = 0;
+                            continue;
+                        }
+                    }
+                    
                 }
             }
             
@@ -336,11 +362,10 @@ int minmax(int current_table[N_ROWS][N_COLUMNS], int origin_is_max){
             while (child_table[row][j] != 0)
                 row--;
             
-            //if parent is max, child is min
             if (is_max)
-                child_table[row][j] = 2;
-            else
                 child_table[row][j] = 1;
+            else
+                child_table[row][j] = 2;
             
             state child;
             child = new_state(child_table, j, current_index, child_value, -1, current_depth+1);
@@ -375,7 +400,7 @@ void pick_column() {
     if (current_player == 1){
         current_move = -1;
         printf("Pick a column, then press enter, player %d:\n", current_player);
-        scanf ("%d",&current_move);
+        scanf ("%d", &current_move);
     
         // while move is invalid, keep asking
         while(current_move < 0 || current_move > N_COLUMNS-1 || column_is_full(table, current_move)){
@@ -383,7 +408,7 @@ void pick_column() {
             scanf ("%d",&current_move);
         }
     }else{
-        current_move = minmax(table,false);
+        current_move = minmax(table,0);
     }
     
     // Find row where his move will be performed
